@@ -24,28 +24,29 @@ export function LoginForm() {
     setIsLoading(true)
     setError("")
 
-    // In a real application, you would validate credentials against your backend
-    // This is a simplified example
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // For demo purposes, accept any non-empty credentials
-      if (email && password) {
-        // Store authentication state (in a real app, use a proper auth solution)
-        localStorage.setItem("isAuthenticated", "true")
-
-        toast.success("Login successful", {
-          description: "Welcome to the admin panel",
-        })
-
-        router.push("/dashboard")
-      } else {
-        setError("Please enter both email and password")
+      const response = await fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.message || "Login failed")
         toast.error("Login failed", {
-          description: "Please enter both email and password",
+          description: data.message || "Login failed",
         })
+        setIsLoading(false)
+        return
       }
+      toast.success("Login successful", {
+        description: "Welcome to the admin panel",
+      })
+      
+      localStorage.setItem("isAuthenticated", "true")
+      router.push("/dashboard")
     } catch (err) {
       setError("Failed to login. Please try again.")
       toast.error("Login failed", {
