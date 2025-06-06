@@ -43,7 +43,8 @@ export function LoginForm() {
       }
       toast.success("Login successful", {
         description: "Welcome to the admin panel",
-      })      
+      })
+      
       localStorage.setItem("isAuthenticated", "true")
       router.push("/dashboard")
     } catch (err) {
