@@ -43,8 +43,7 @@ export function LoginForm() {
       }
       toast.success("Login successful", {
         description: "Welcome to the admin panel",
-      })
-      
+      })      
       localStorage.setItem("isAuthenticated", "true")
       router.push("/dashboard")
     } catch (err) {
@@ -64,7 +63,7 @@ export function LoginForm() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Login</CardTitle>
-            <CardDescription>Enter your credentials to access the admin panel</CardDescription>
+            <CardDescription>Enter your credentials to access the astherix panel</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,7 +115,7 @@ export function LoginForm() {
 
           {/* Company Name and Tagline */}
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-gray-900">Admin Portal</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Astherix Portal</h2>
             <p className="text-lg text-gray-600">Streamline Your Business Operations</p>
           </div>
 

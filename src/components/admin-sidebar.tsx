@@ -78,7 +78,7 @@ export function AdminSidebar() {
               <AvatarImage src="/images.png" alt="Company Logo" />
               <AvatarFallback className="text-xs sm:text-sm">AC</AvatarFallback>
             </Avatar>
-            {!isCollapsed && <div className="font-semibold text-sm sm:text-base truncate">Admin Panel</div>}
+            {!isCollapsed && <div className="font-semibold text-sm sm:text-base truncate">Astherix Panel</div>}
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
