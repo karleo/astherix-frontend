@@ -55,9 +55,11 @@ export default function DashboardLayout({
   const getPageTitle = () => {
     const routeTitles: Record<string, string> = {
       "/dashboard": "Dashboard",
+      "/dashboard/users": "User Management",
       "/dashboard/employees": "Employee Management",
       "/dashboard/documents": "Document Management",
       "/dashboard/roles": "Role Management",
+      "/dashboard/maintenance": "System Maintenance",
       "/dashboard/profile": "Profile",
       "/dashboard/notifications": "Notifications",
     }
@@ -137,7 +139,7 @@ export default function DashboardLayout({
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src="/images.png" alt="Admin" />
+                          <AvatarImage src="/diverse-user-avatars.png" alt="Admin" />
                           <AvatarFallback>AD</AvatarFallback>
                         </Avatar>
                       </Button>
