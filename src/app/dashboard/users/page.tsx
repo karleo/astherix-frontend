@@ -83,17 +83,35 @@ export default function UsersPage() {
       user.role.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleCreateUser = (userData: Omit<User, "id" | "createdAt">) => {
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split("T")[0],
+  const handleCreateUser = async (userData: Omit<User, "id" | "createdAt">) => {
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error("Failed to create user", {
+          description: data.message || "An error occurred while creating the user",
+        });
+        return;
+      }
+
+      const newUser = await response.json();
+      setUsers([...users, newUser]);
+      setIsCreateDialogOpen(false);
+      toast.success("User created successfully", {
+        description: `${userData.username} has been added to the system`,
+      });
+    } catch {
+      toast.error("Failed to create user", {
+        description: "An error occurred while creating the user",
+      });
     }
-    setUsers([...users, newUser])
-    setIsCreateDialogOpen(false)
-    toast.success("User created successfully", {
-      description: `${userData.username} has been added to the system`,
-    })
   }
 
   const handleEditUser = (userData: Omit<User, "id" | "createdAt">) => {

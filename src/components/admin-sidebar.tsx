@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Settings,
   ShieldCheck,
+  Globe,
+  Building2,
 } from "lucide-react"
 import {
   Sidebar,
@@ -61,16 +63,15 @@ export function AdminSidebar() {
               <AvatarImage src="/images.png" alt="Company Logo" />
               <AvatarFallback className="text-xs sm:text-sm">AC</AvatarFallback>
             </Avatar>
-            {!isCollapsed && <div className="font-semibold text-sm sm:text-base truncate">Admin Panel</div>}
+            {!isCollapsed && <div className="font-semibold text-sm sm:text-base truncate">Astherix Panel</div>}
           </div>
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleSidebar}
-                className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0"
-              >
+                className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
                 {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 <span className="sr-only">Toggle sidebar</span>
               </Button>
@@ -78,7 +79,7 @@ export function AdminSidebar() {
             <TooltipContent side="right">
               <p>{isCollapsed ? "Expand sidebar" : "Collapse sidebar"}</p>
             </TooltipContent>
-          </Tooltip>
+          </Tooltip> */}
         </SidebarHeader>
 
         <SidebarContent>
@@ -189,6 +190,51 @@ export function AdminSidebar() {
                     </TooltipContent>
                   )}
                 </Tooltip>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <Collapsible defaultOpen className="group/collapsible">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild tooltip="Location Management">
+                        <CollapsibleTrigger className="flex items-center gap-2 w-full">
+                          <Globe className="h-5 w-5 flex-shrink-0" />
+                          {!isCollapsed && (
+                            <>
+                              <span className="truncate">Location Management</span>
+                              <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                            </>
+                          )}
+                        </CollapsibleTrigger>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {isCollapsed && (
+                      <TooltipContent side="right">
+                        <p>Location Management</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={pathname === "/dashboard/country"}>
+                          <Link href="/dashboard/country">
+                            <Globe className="h-4 w-4" />
+                            <span>Countries</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={pathname === "/dashboard/city"}>
+                          <Link href="/dashboard/city">
+                            <Building2 className="h-4 w-4" />
+                            <span>Cities</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
