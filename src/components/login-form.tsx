@@ -32,8 +32,13 @@ export function LoginForm() {
         },
         body: JSON.stringify({ email, password }),
       })
+      
+      const data = await response.json()
+      console.log('Response:', data)      
+      
       if (!response.ok) {
-        const data = await response.json()
+      //  const data = await response.json()  
+
         setError(data.message || "Login failed")
         toast.error("Login failed", {
           description: data.message || "Login failed",
@@ -41,12 +46,18 @@ export function LoginForm() {
         setIsLoading(false)
         return
       }
-      toast.success("Login successful", {
+      toast.success("Login successful", {        
         description: "Welcome to the admin panel",
-      })
-      
+      })      
+      localStorage.setItem("token", data.data.token) // Replace with actual token from response if available      
       localStorage.setItem("isAuthenticated", "true")
-      router.push("/dashboard")
+      // // localStorage.setItem("userEmail", email) 
+      // // localStorage.setItem("userRole", "admin") // Assuming admin role for this example 
+      // // localStorage.setItem("userName", "Admin") // Assuming admin name for this example
+
+
+
+    router.push("/dashboard")
     } catch (err) {
       setError("Failed to login. Please try again.")
       toast.error("Login failed", {

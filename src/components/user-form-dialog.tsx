@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Eye, EyeOff } from "lucide-react"
+import { PassThrough } from "stream"
 
 interface User {
   id: string
@@ -121,6 +122,8 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, title, descriptio
     const submitData = {
       username: formData.username,
       email: formData.email,
+      password: formData.password,
+      password_confirmation: formData.confirmPassword,      
       role: formData.role,
       status: formData.status,
       lastLogin: initialData?.lastLogin,

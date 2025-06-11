@@ -85,13 +85,15 @@ export default function UsersPage() {
 
   const handleCreateUser = async (userData: Omit<User, "id" | "createdAt">) => {
     try {
-      const response = await fetch("http://localhost:8000/api/auth/users", {
+      const response = await fetch("http://localhost:8000/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`, // Assuming you store the token in localStorage
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(userData),        
       });
+      console.log('Response:', userData)
 
       if (!response.ok) {
         const data = await response.json();
