@@ -245,7 +245,7 @@ export default function UsersPage() {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={`/api/placeholder/32/32`} alt={user.username} />
+                          <AvatarImage src="/diverse-user-avatars.png" alt={user.username} />
                           <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>

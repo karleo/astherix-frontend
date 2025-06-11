@@ -54,9 +54,9 @@ export function CountryFormDialog({ open, onOpenChange, onSubmit, initialData }:
 
     if (!code.trim()) {
       newErrors.code = "Country code is required"
-    } else if (code.length !== 2) {
-      newErrors.code = "Country code must be exactly 2 characters"
-    } else if (!/^[A-Z]{2}$/.test(code.toUpperCase())) {
+    } else if (code.length !== 3) {
+      newErrors.code = "Country code must be exactly 3 characters"
+    } else if (!/^[A-Z]{3}$/.test(code.toUpperCase())) {
       newErrors.code = "Country code must contain only letters"
     }
 
@@ -118,8 +118,8 @@ export function CountryFormDialog({ open, onOpenChange, onSubmit, initialData }:
                 id="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Enter 2-letter country code (e.g., US)"
-                maxLength={2}
+                placeholder="Enter 3-letter country code (e.g., US)"
+                maxLength={3}
                 className={errors.code ? "border-destructive" : ""}
               />
               {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}

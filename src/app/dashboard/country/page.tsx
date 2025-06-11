@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,8 @@ import { CountryFormDialog } from "@/components/country-form-dialog"
 import { ApprovalDialog } from "@/components/approval-dialog"
 import { Plus, MoreHorizontal } from "lucide-react"
 
+import moment from "moment"
+
 // Define the Country type
 interface Country {
   id: string
@@ -19,20 +21,26 @@ interface Country {
   code: string
   createdAt: string
 }
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const initialCountries: Country[] = [
-  { id: "1", name: "United States", code: "US", createdAt: "2024-01-15" },
-  { id: "2", name: "Canada", code: "CA", createdAt: "2024-01-16" },
-  { id: "3", name: "United Kingdom", code: "GB", createdAt: "2024-01-17" },
-  { id: "4", name: "Germany", code: "DE", createdAt: "2024-01-18" },
-  { id: "5", name: "France", code: "FR", createdAt: "2024-01-19" },
-  { id: "6", name: "Japan", code: "JP", createdAt: "2024-01-20" },
-  { id: "7", name: "Australia", code: "AU", createdAt: "2024-01-21" },
-  { id: "8", name: "Brazil", code: "BR", createdAt: "2024-01-22" },
+// const initialCountries: Country[] = [
+//   { id: "1", name: "United States", code: "US", createdAt: "2024-01-15" },
+//   { id: "2", name: "Canada", code: "CA", createdAt: "2024-01-16" },
+//   { id: "3", name: "United Kingdom", code: "GB", createdAt: "2024-01-17" },
+//   { id: "4", name: "Germany", code: "DE", createdAt: "2024-01-18" },
+//   { id: "5", name: "France", code: "FR", createdAt: "2024-01-19" },
+//   { id: "6", name: "Japan", code: "JP", createdAt: "2024-01-20" },
+//   { id: "7", name: "Australia", code: "AU", createdAt: "2024-01-21" },
+//   { id: "8", name: "Brazil", code: "BR", createdAt: "2024-01-22" },
+// ]
+
+
+const mockCountry: Country[] = [
+
 ]
 
 export default function CountryPage() {
-  const [countries, setCountries] = useState<Country[]>(initialCountries)
+  const [countries, setCountries] = useState<Country[]>(mockCountry)
   const [searchTerm, setSearchTerm] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCountry, setEditingCountry] = useState<Country | null>(null)
@@ -63,43 +71,114 @@ export default function CountryPage() {
     setCountryToDelete(country)
     setIsDeleteDialogOpen(true)
   }
+  const initContries = async () => {
+    const response = await fetch(`${API_URL}/api/countries`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log("Countries data:", data);
+    const countryList = data.map((country: any) => {
+      return {
+        id: country.id,
+        name: country.country_name,
+        code: country.country_code,
+        createdAt: moment(country.created_at).format("DD/MM/YYYY"),
+      }
+    });
+    setCountries(countryList);
+  }
+   useEffect(() => {
+      initContries().then();
+    }, []);
 
   // Handle form submission
-  const handleFormSubmit = (data: { name: string; code: string }) => {
-    if (editingCountry) {
-      // Update existing country
-      setCountries((prev) =>
-        prev.map((country) =>
-          country.id === editingCountry.id ? { ...country, name: data.name, code: data.code } : country,
-        ),
-      )
-      toast.success("Country updated successfully", {
-        description: `${data.name} has been updated`,
-      })
-    } else {
-      // Add new country
-      const newCountry: Country = {
-        id: Date.now().toString(),
-        name: data.name,
-        code: data.code,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleFormSubmit = async (data: { name: string; code: string }) => {
+    try {
+      if (editingCountry) {
+        // Update existing country
+        const response = await fetch(`${API_URL}/api/countries/${editingCountry.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ country_name: data.name, country_code: data.code }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json()
+          toast.error("Failed to update country", { description: errorData.message || "Unknown error" })
+          return
+        }
+        setCountries((prev) =>
+          prev.map((country) =>
+            country.id === editingCountry.id ? { ...country, name: data.name, code: data.code } : country,
+          ),
+        )
+        toast.success("Country updated successfully", {
+          description: `${data.name} has been updated`,
+        })
+      } else {
+        // Add new country
+        const response = await fetch(`${API_URL}/api/countries`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ country_name: data.name, country_code: data.code }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json()
+          toast.error("Failed to add country", { description: errorData.message || "Unknown error" })
+          return
+        }
+        const newCountry: Country = {
+          id: Date.now().toString(),
+          name: data.name,
+          code: data.code,
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+        setCountries((prev) => [...prev, newCountry])
+        toast.success("Country added successfully", {
+          description: `${data.name} has been added to the system`,
+        })
       }
-      setCountries((prev) => [...prev, newCountry])
-      toast.success("Country added successfully", {
-        description: `${data.name} has been added to the system`,
-      })
+    } catch {
+      toast.error("Failed to add/update country", { description: "Network or server error" })
+      return
     }
     setIsFormOpen(false)
     setEditingCountry(null)
   }
 
   // Confirm delete action
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (countryToDelete) {
-      setCountries((prev) => prev.filter((country) => country.id !== countryToDelete.id))
-      toast.success("Country deleted successfully", {
-        description: `${countryToDelete.name} has been removed from the system`,
-      })
+      try {
+        const response = await fetch(`${API_URL}/api/countries/${countryToDelete.id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ country_name: countryToDelete.name, country_code: countryToDelete.code }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json()
+          toast.error("Failed to delete country", { description: errorData.message || "Unknown error" })
+          return
+        }
+        setCountries((prev) => prev.filter((country) => country.id !== countryToDelete.id))
+        toast.success("Country deleted successfully", {
+          description: `${countryToDelete.name} has been removed from the system`,
+        })
+      } catch {
+        toast.error("Failed to delete country", { description: "Network or server error" })
+        return
+      }
       setIsDeleteDialogOpen(false)
       setCountryToDelete(null)
     }
