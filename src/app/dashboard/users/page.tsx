@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,8 @@ import { UserFormDialog } from "@/components/user-form-dialog"
 import { DeleteUserDialog } from "@/components/delete-user-dialog"
 import { toast } from "sonner"
 
+import moment from "moment"
+
 interface User {
   id: string
   username: string
@@ -31,42 +33,19 @@ interface User {
 }
 
 const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "john_doe",
-    email: "john.doe@company.com",
-    role: "Admin",
-    status: "active",
-    createdAt: "2024-01-15",
-    lastLogin: "2024-01-20",
-  },
-  {
-    id: "2",
-    username: "jane_smith",
-    email: "jane.smith@company.com",
-    role: "Manager",
-    status: "active",
-    createdAt: "2024-01-10",
-    lastLogin: "2024-01-19",
-  },
-  {
-    id: "3",
-    username: "bob_wilson",
-    email: "bob.wilson@company.com",
-    role: "Employee",
-    status: "inactive",
-    createdAt: "2024-01-05",
-    lastLogin: "2024-01-15",
-  },
-  {
-    id: "4",
-    username: "alice_brown",
-    email: "alice.brown@company.com",
-    role: "Employee",
-    status: "pending",
-    createdAt: "2024-01-20",
-  },
+  // {
+  //   id: "1",
+  //   username: "john_doe",
+  //   email: "john.doe@company.com",
+  //   role: "Admin",
+  //   status: "active",
+  //   createdAt: "2024-01-15",
+  //   lastLogin: "2024-01-20",
+  // },
 ]
+
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>(mockUsers)
@@ -85,7 +64,7 @@ export default function UsersPage() {
 
   const handleCreateUser = async (userData: Omit<User, "id" | "createdAt">) => {
     try {
-      const response = await fetch("http://localhost:8000/api/users", {
+      const response = await fetch(`${API_URL}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,23 +72,25 @@ export default function UsersPage() {
         },
         body: JSON.stringify(userData),        
       });
-      console.log('Response:', userData)
+
+      const data = await response.json();
+
+      console.log('check', data);
 
       if (!response.ok) {
-        const data = await response.json();
         toast.error("Failed to create user", {
           description: data.message || "An error occurred while creating the user",
         });
         return;
       }
-
-      const newUser = await response.json();
+      const newUser = data.data;
       setUsers([...users, newUser]);
       setIsCreateDialogOpen(false);
       toast.success("User created successfully", {
         description: `${userData.username} has been added to the system`,
       });
-    } catch {
+    } catch(e) {
+      console.log('error', e);
       toast.error("Failed to create user", {
         description: "An error occurred while creating the user",
       });
@@ -151,6 +132,32 @@ export default function UsersPage() {
         return <Badge variant="secondary">{status}</Badge>
     }
   }
+
+  const initUsers = async () => {
+    const response = await fetch(`${API_URL}/api/users`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    const data = await response.json();
+    const usersList = data.data.data.map((user: any) => {
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        createdAt: moment(user.created_at).format("DD/MM/YYYY"),
+        lastLogin: "-",
+      }
+    });
+    setUsers(usersList);
+  }
+
+  useEffect(() => {
+    initUsers().then();
+  }, []);
 
   return (
     <div className="space-y-6">

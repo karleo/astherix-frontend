@@ -216,10 +216,10 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, title, descriptio
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Manager">Manager</SelectItem>
-                <SelectItem value="Employee">Employee</SelectItem>
-                <SelectItem value="Viewer">Viewer</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
             {errors.role && <p className="text-sm text-red-500">{errors.role}</p>}

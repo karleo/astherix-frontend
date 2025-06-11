@@ -12,6 +12,10 @@ import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+console.log('API_URL', API_URL)
+
 export function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -25,7 +29,7 @@ export function LoginForm() {
     setError("")
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
