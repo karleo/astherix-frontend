@@ -19,37 +19,42 @@ import { toast } from "sonner"
 
 interface Country {
   id: string
-  name: string
-  code: string
+  country_name: string
+  country_code: string
 }
 
 interface City {
   id: string
-  name: string
-  code: string
+  city_name: string
+  city_code: string
   countryId: string
   countryName: string
+  country:{
+    id: string
+    country_name: string
+    country_code: string
+  }
 }
 
 interface CityFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: { name: string; code: string; countryId: string }) => void
+  onSubmit: (data: { city_name: string; city_code: string; countryId: string }) => void
   initialData?: City | null
   countries: Country[]
 }
-
+ 
 export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, countries }: CityFormDialogProps) {
-  const [name, setName] = useState("")
-  const [code, setCode] = useState("")
+  const [city_name, setName] = useState("")
+  const [city_code, setCode] = useState("")
   const [countryId, setCountryId] = useState("")
-  const [errors, setErrors] = useState<{ name?: string; code?: string; countryId?: string }>({})
+  const [errors, setErrors] = useState<{ city_name?: string; city_code?: string; countryId?: string }>({})
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name)
-      setCode(initialData.code)
-      setCountryId(initialData.countryId)
+      setName(initialData.city_name)
+      setCode(initialData.city_code)
+      setCountryId(initialData.countryId)      
     } else {
       setName("")
       setCode("")
@@ -59,18 +64,18 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
   }, [initialData, open])
 
   const validateForm = () => {
-    const newErrors: { name?: string; code?: string; countryId?: string } = {}
+    const newErrors: { city_name?: string; city_code?: string; countryId?: string } = {}
 
-    if (!name.trim()) {
-      newErrors.name = "City name is required"
+    if (!city_name.trim()) {
+      newErrors.city_name = "City name is required"
     }
-
-    if (!code.trim()) {
-      newErrors.code = "City code is required"
-    } else if (code.length < 2 || code.length > 5) {
-      newErrors.code = "City code must be between 2-5 characters"
-    } else if (!/^[A-Z0-9]+$/.test(code.toUpperCase())) {
-      newErrors.code = "City code must contain only letters and numbers"
+    
+    if (!city_code.trim()) {
+      newErrors.city_code = "City code is required"
+    } else if (city_code.length !== 3) {
+      newErrors.city_code = "City code must 3 characters"
+    } else if (!/^[A-Z]{3}$/.test(city_code.toUpperCase())) {
+      newErrors.city_code = "City code must contain only letters"
     }
 
     if (!countryId) {
@@ -84,17 +89,19 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    // console.log("Submitting city form", { city_name, city_code, countryId })  
+
     if (!validateForm()) {
       toast.error("Please fix the errors in the form")
       return
     }
 
     onSubmit({
-      name: name.trim(),
-      code: code.toUpperCase().trim(),
+      city_name: city_name.trim(),
+      city_code: city_code.toUpperCase().trim(),
       countryId,
     })
-
+    
     // Reset form
     setName("")
     setCode("")
@@ -122,38 +129,39 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">City Name</Label>
+              <Label htmlFor="city_name">City Name</Label>
               <Input
-                id="name"
-                value={name}
+                id="city_name"
+                value={city_name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter city name"
-                className={errors.name ? "border-destructive" : ""}
+                className={errors.city_name ? "border-destructive" : ""}
               />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              {errors.city_name && <p className="text-sm text-destructive">{errors.city_name}</p>}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="code">City Code</Label>
+              <Label htmlFor="city_code">City Code</Label>
               <Input
-                id="code"
-                value={code}
+                id="city_code"
+                value={city_code} 
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Enter city code (e.g., NYC, LON)"
                 maxLength={5}
-                className={errors.code ? "border-destructive" : ""}
+                className={errors.city_code ? "border-destructive" : ""}
               />
-              {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
+              {errors.city_code && <p className="text-sm text-destructive">{errors.city_code}</p>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="country">Country</Label>
-              <Select value={countryId} onValueChange={setCountryId}>
+              <Select value={countryId} onValueChange={(countryId: string) => {setCountryId(countryId)}}>
+              {/* <Select value={countryId} onValueChange={setCountryId}> */}
                 <SelectTrigger className={errors.countryId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent>                  
                   {countries.map((country) => (
                     <SelectItem key={country.id} value={country.id}>
-                      {country.name} ({country.code})
+                      {country.country_name} ({country.country_code})
                     </SelectItem>
                   ))}
                 </SelectContent>

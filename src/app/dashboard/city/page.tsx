@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,59 +10,143 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { CityFormDialog } from "@/components/city-form-dialog"
 import { ApprovalDialog } from "@/components/approval-dialog"
-import { Plus, MoreHorizontal } from "lucide-react"
+import { Plus, MoreHorizontal, ArrowUpDown } from "lucide-react"
 
 interface Country {
   id: string
-  name: string
-  code: string
+  country_name: string
+  country_code: string
 }
 
 interface City {
   id: string
-  name: string
-  code: string
+  city_name: string
+  city_code: string
   countryId: string
-  countryName: string
+  countryName: string   
   createdAt: string
 }
 
-const countries: Country[] = [
-  { id: "1", name: "United States", code: "US" },
-  { id: "2", name: "Canada", code: "CA" },
-  { id: "3", name: "United Kingdom", code: "GB" },
-  { id: "4", name: "Germany", code: "DE" },
-  { id: "5", name: "France", code: "FR" },
-  { id: "6", name: "Japan", code: "JP" },
-  { id: "7", name: "Australia", code: "AU" },
-  { id: "8", name: "Brazil", code: "BR" },
-]
 
-const initialCities: City[] = [
-  { id: "1", name: "New York", code: "NYC", countryId: "1", countryName: "United States", createdAt: "2024-01-15" },
-  { id: "2", name: "Los Angeles", code: "LAX", countryId: "1", countryName: "United States", createdAt: "2024-01-16" },
-  { id: "3", name: "Toronto", code: "TOR", countryId: "2", countryName: "Canada", createdAt: "2024-01-17" },
-  { id: "4", name: "London", code: "LON", countryId: "3", countryName: "United Kingdom", createdAt: "2024-01-18" },
-  { id: "5", name: "Berlin", code: "BER", countryId: "4", countryName: "Germany", createdAt: "2024-01-19" },
-  { id: "6", name: "Paris", code: "PAR", countryId: "5", countryName: "France", createdAt: "2024-01-20" },
-  { id: "7", name: "Tokyo", code: "TYO", countryId: "6", countryName: "Japan", createdAt: "2024-01-21" },
-  { id: "8", name: "Sydney", code: "SYD", countryId: "7", countryName: "Australia", createdAt: "2024-01-22" },
-]
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function CityPage() {
-  const [cities, setCities] = useState<City[]>(initialCities)
+  const [cities, setCities] = useState<City[]>([])
+  const [countries, setCountries] = useState<Country[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCity, setEditingCity] = useState<City | null>(null)
   const [cityToDelete, setCityToDelete] = useState<City | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof City | null;
+    direction: 'ascending' | 'descending';
+  }>({
+    key: null,
+    direction: 'ascending'
+  });
+
+  const fetchCities = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/cities`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch cities');
+      }
+      const data = await response.json() as City[];
+      // console.log('Cities data:', data);
+      const cityList = data.map((city: any) => {
+        return {
+          id: city.id,
+          city_name: city.city_name,
+          city_code: city.city_code,
+          countryId: city.country.id,
+          countryName: city.country.country_name,
+          createdAt: new Date().toISOString().split('T')[0],
+        }        
+      });
+      setCities(cityList);
+    } catch (err) {
+      console.error('Error fetching cities:', err);
+      toast.error("Failed to fetch cities", { description: "Please try again later" });
+    }
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/countries`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch countries');
+      }
+      const data = await response.json() as Country[];
+      // console.log('Countries data:', data);
+      const countryList = data.map((country: Country) => {
+        return {
+          id: country.id.toString(), 
+          country_name: country.country_name,
+          country_code: country.country_code,
+        }        
+      });
+      setCountries(countryList);
+    } catch (err) {
+      console.error('Error fetching countries:', err);
+      toast.error("Failed to fetch countries", { description: "Please try again later" });
+    } 
+  };
+
+  useEffect(() => {
+    fetchCities();
+    fetchCountries();
+  }, []);
 
   const filteredCities = cities.filter(
     (city) =>
-      city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      city.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      city.city_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      city.city_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       city.countryName.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const handleSort = (key: keyof City) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    
+    if (sortConfig.key === key) {
+      direction = sortConfig.direction === 'ascending' ? 'descending' : 'ascending';
+    }
+    
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  const sortedAndFilteredCities = [...filteredCities].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+
+    if (aValue === bValue) return 0;
+
+    const comparison = aValue < bValue ? -1 : 1;
+    return sortConfig.direction === 'ascending' ? comparison : -comparison;
+  });
+
+  // Calculate pagination
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = sortedAndFilteredCities.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(sortedAndFilteredCities.length / itemsPerPage)
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber)
+  }
 
   const handleAddCity = () => {
     setEditingCity(null)
@@ -79,53 +163,117 @@ export default function CityPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  const handleFormSubmit = (data: { name: string; code: string; countryId: string }) => {
-    const country = countries.find((c) => c.id === data.countryId)
-    if (!country) return
-
-    if (editingCity) {
-      // Update existing city
-      setCities((prev) =>
-        prev.map((city) =>
-          city.id === editingCity.id
-            ? {
-                ...city,
-                name: data.name,
-                code: data.code,
-                countryId: data.countryId,
-                countryName: country.name,
-              }
-            : city,
-        ),
-      )
-      toast.success("City updated successfully", {
-        description: `${data.name} has been updated`,
-      })
-    } else {
-      // Add new city
-      const newCity: City = {
-        id: Date.now().toString(),
-        name: data.name,
-        code: data.code,
-        countryId: data.countryId,
-        countryName: country.name,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleFormSubmit = async (data: { city_name: string; city_code: string; countryId: string }) => {
+    try {
+      const country = countries.find((c) => c.id === data.countryId)
+     
+      if (!country) return
+  
+      if (editingCity) {
+        // Update existing city
+        const response = await fetch(`${API_URL}/api/cities/${editingCity.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            city_name: data.city_name,
+            city_code: data.city_code,
+            country_id: data.countryId,
+            country_name: country.country_name, // Update the countryName field with the new name,
+          }),
+        });
+        console.log('Update response:', response)
+  
+        if (!response.ok) {
+          throw new Error('Failed to update city');
+        }
+  
+        const responseData = await response.json() as City;
+        
+        console.log('Updated city data:', responseData)
+  
+        setCities((prev) =>
+          prev.map((city) =>
+            city.id === editingCity.id
+              ? {
+                  ...city,
+                  city_name: responseData.city_name,
+                  city_code: responseData.city_code,
+                  country_id: responseData.countryId,
+                  countryName: country.country_name, // Update the countryName field with the new name,
+                }
+              : city,
+          ),
+        )
+        toast.success("City updated successfully", {
+          description: `${responseData.city_name} has been updated`,
+        })
+      } else {
+        // Add new city
+        const response = await fetch(`${API_URL}/api/cities`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            city_name: data.city_name,
+            city_code: data.city_code,
+            country_id: data.countryId,
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to add city');
+        }
+        //const responseData = await response.json() as City;
+        const newCity: City = {
+          id: Date.now().toString(),
+          city_name: data.city_name,
+          city_code: data.city_code,
+          countryId: data.countryId,
+          countryName: country.country_name,          
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+        setCities((prev) => [...prev, newCity])
+        toast.success("City added successfully", {
+          description: `${data.city_name} has been added to the system`,
+        })
       }
-      setCities((prev) => [...prev, newCity])
-      toast.success("City added successfully", {
-        description: `${data.name} has been added to the system`,
-      })
+    } catch (err) {
+      console.error('Error saving city:', err);
+      toast.error("Failed to save city", { description: "Please try again later" });
+      return;
     }
     setIsFormOpen(false)
     setEditingCity(null)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (cityToDelete) {
-      setCities((prev) => prev.filter((city) => city.id !== cityToDelete.id))
-      toast.success("City deleted successfully", {
-        description: `${cityToDelete.name} has been removed from the system`,
-      })
+      try {
+        const response = await fetch(`${API_URL}/api/cities/${cityToDelete.id}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete city');
+        }
+
+        setCities((prev) => prev.filter((city) => city.id !== cityToDelete.id))
+        toast.success("City deleted successfully", {
+          description: `${cityToDelete.city_name} has been removed from the system`,
+        })
+      } catch (err) {
+        console.error('Error deleting city:', err);
+        toast.error("Failed to delete city", { description: "Please try again later" });
+        return;
+      }
       setIsDeleteDialogOpen(false)
       setCityToDelete(null)
     }
@@ -170,26 +318,75 @@ export default function CityPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>City Name</TableHead>
-                  <TableHead>City Code</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Created Date</TableHead>
+                  <TableHead className="w-[50px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('id')}
+                      className="flex items-center"
+                    >
+                      #
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('city_name')}
+                      className="flex items-center"
+                    >
+                      City Name
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('city_code')}
+                      className="flex items-center"
+                    >
+                      City Code
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('countryName')}
+                      className="flex items-center"
+                    >
+                      Country
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('createdAt')}
+                      className="flex items-center"
+                    >
+                      Created Date
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCities.length === 0 ? (
+                {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? "No cities found matching your search." : "No cities available."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCities.map((city) => (
+                  currentItems.map((city, index) => (
                     <TableRow key={city.id}>
-                      <TableCell className="font-medium">{city.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {indexOfFirstItem + index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">{city.city_name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{city.code}</Badge>
+                        <Badge variant="outline">{city.city_code}</Badge>
                       </TableCell>
                       <TableCell>{city.countryName}</TableCell>
                       <TableCell>{city.createdAt}</TableCell>
@@ -215,9 +412,47 @@ export default function CityPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {sortedAndFilteredCities.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, sortedAndFilteredCities.length)} of {sortedAndFilteredCities.length} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
       <CityFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
@@ -229,10 +464,10 @@ export default function CityPage() {
       <ApprovalDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={confirmDelete}
+        onApprove={confirmDelete}
         title="Delete City"
-        description={`Are you sure you want to delete "${cityToDelete?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        description={`Are you sure you want to delete "${cityToDelete?.city_name}"? This action cannot be undone.`}
+        approveText="Delete"
         cancelText="Cancel"
       />
     </div>

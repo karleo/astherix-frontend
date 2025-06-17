@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { CountryFormDialog } from "@/components/country-form-dialog"
 import { ApprovalDialog } from "@/components/approval-dialog"
-import { Plus, MoreHorizontal } from "lucide-react"
+import { Plus, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react"
 
 import moment from "moment"
 
@@ -46,6 +46,15 @@ export default function CountryPage() {
   const [editingCountry, setEditingCountry] = useState<Country | null>(null)
   const [countryToDelete, setCountryToDelete] = useState<Country | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Country | null;
+    direction: 'ascending' | 'descending';
+  }>({
+    key: null,
+    direction: 'ascending'
+  });
 
   // Filter countries based on search term
   const filteredCountries = countries.filter(
@@ -53,6 +62,41 @@ export default function CountryPage() {
       country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       country.code.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  // Sort function
+  const sortedCountries = [...filteredCountries].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === 'ascending' ? -1 : 1;
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === 'ascending' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  // Handle sort
+  const handleSort = (key: keyof Country) => {
+    setSortConfig((currentSort) => ({
+      key,
+      direction:
+        currentSort.key === key && currentSort.direction === 'ascending'
+          ? 'descending'
+          : 'ascending',
+    }));
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedCountries.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentCountries = sortedCountries.slice(startIndex, endIndex)
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   // Handle adding a new country
   const handleAddCountry = () => {
@@ -222,22 +266,54 @@ export default function CountryPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Country Name</TableHead>
-                  <TableHead>Country Code</TableHead>
-                  <TableHead>Created Date</TableHead>
+                  <TableHead className="w-[50px]">No.</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      Country Name
+                      {sortConfig.key === 'name' && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('code')}
+                  >
+                    <div className="flex items-center">
+                      Country Code
+                      {sortConfig.key === 'code' && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    <div className="flex items-center">
+                      Created Date
+                      {sortConfig.key === 'createdAt' && (
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCountries.length === 0 ? (
+                {currentCountries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       No countries found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCountries.map((country) => (
+                  currentCountries.map((country, index) => (
                     <TableRow key={country.id}>
+                      <TableCell>{startIndex + index + 1}</TableCell>
                       <TableCell>{country.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{country.code}</Badge>
@@ -278,6 +354,36 @@ export default function CountryPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {sortedCountries.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, sortedCountries.length)} of {sortedCountries.length} countries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
