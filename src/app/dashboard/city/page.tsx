@@ -22,8 +22,12 @@ interface City {
   id: string
   city_name: string
   city_code: string
-  countryId: string
-  countryName: string   
+  country_id: string
+  country:{
+    id: string
+    country_name: string
+    country_code: string
+  }  
   createdAt: string
 }
 
@@ -65,8 +69,12 @@ export default function CityPage() {
           id: city.id,
           city_name: city.city_name,
           city_code: city.city_code,
-          countryId: city.country.id,
-          countryName: city.country.country_name,
+          country_id: city.country_id,
+          country: {
+            id: city.country.id.toString(),
+            country_name: city.country.country_name,
+            country_code: city.country.country_code,
+          },
           createdAt: new Date().toISOString().split('T')[0],
         }        
       });
@@ -112,7 +120,7 @@ export default function CityPage() {
     (city) =>
       city.city_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       city.city_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      city.countryName.toLowerCase().includes(searchTerm.toLowerCase()),
+      city.country.country_name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const handleSort = (key: keyof City) => {
@@ -163,9 +171,9 @@ export default function CityPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  const handleFormSubmit = async (data: { city_name: string; city_code: string; countryId: string }) => {
+  const handleFormSubmit = async (data: { city_name: string; city_code: string; country_id: string }) => {
     try {
-      const country = countries.find((c) => c.id === data.countryId)
+      const country = countries.find((c) => c.id === data.country_id)
      
       if (!country) return
   
@@ -180,8 +188,7 @@ export default function CityPage() {
           body: JSON.stringify({
             city_name: data.city_name,
             city_code: data.city_code,
-            country_id: data.countryId,
-            country_name: country.country_name, // Update the countryName field with the new name,
+            country_id: data.country_id,           
           }),
         });
         console.log('Update response:', response)
@@ -201,8 +208,13 @@ export default function CityPage() {
                   ...city,
                   city_name: responseData.city_name,
                   city_code: responseData.city_code,
-                  country_id: responseData.countryId,
-                  countryName: country.country_name, // Update the countryName field with the new name,
+                  country_id: responseData.country_id,
+                  country: {
+                    id: responseData.country_id,
+                    country_name: country.country_name, // Ensure country name is updated
+                    country_code: country.country_code, // Ensure country code is updated
+                  },
+                  // countryName: country.country_name, // Update the countryName field with the new name,
                 }
               : city,
           ),
@@ -221,25 +233,29 @@ export default function CityPage() {
           body: JSON.stringify({
             city_name: data.city_name,
             city_code: data.city_code,
-            country_id: data.countryId,
+            country_id: data.country_id,
           }),
         });
   
         if (!response.ok) {
           throw new Error('Failed to add city');
         }
-        //const responseData = await response.json() as City;
+        const responseData = await response.json() as City;
         const newCity: City = {
-          id: Date.now().toString(),
-          city_name: data.city_name,
-          city_code: data.city_code,
-          countryId: data.countryId,
-          countryName: country.country_name,          
+          id:responseData.id,
+          city_name: responseData.city_name,
+          city_code: responseData.city_code,
+          country_id: responseData.country_id,
+          country: {
+            id: responseData.country_id,
+            country_name: country.country_name,
+            country_code: country.country_code,
+          },
           createdAt: new Date().toISOString().split("T")[0],
         }
         setCities((prev) => [...prev, newCity])
         toast.success("City added successfully", {
-          description: `${data.city_name} has been added to the system`,
+          description: `${responseData.city_name} has been added to the system`,
         })
       }
     } catch (err) {
@@ -388,7 +404,7 @@ export default function CityPage() {
                       <TableCell>
                         <Badge variant="outline">{city.city_code}</Badge>
                       </TableCell>
-                      <TableCell>{city.countryName}</TableCell>
+                      <TableCell>{city.country.country_name}</TableCell>
                       <TableCell>{city.createdAt}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

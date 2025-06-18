@@ -27,8 +27,7 @@ interface City {
   id: string
   city_name: string
   city_code: string
-  countryId: string
-  countryName: string
+  country_id: string  
   country:{
     id: string
     country_name: string
@@ -39,7 +38,7 @@ interface City {
 interface CityFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: { city_name: string; city_code: string; countryId: string }) => void
+  onSubmit: (data: { city_name: string; city_code: string; country_id: string }) => void
   initialData?: City | null
   countries: Country[]
 }
@@ -47,14 +46,14 @@ interface CityFormDialogProps {
 export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, countries }: CityFormDialogProps) {
   const [city_name, setName] = useState("")
   const [city_code, setCode] = useState("")
-  const [countryId, setCountryId] = useState("")
-  const [errors, setErrors] = useState<{ city_name?: string; city_code?: string; countryId?: string }>({})
+  const [country_id, setCountryId] = useState("")
+  const [errors, setErrors] = useState<{ city_name?: string; city_code?: string; country_id?: string }>({})
 
   useEffect(() => {
-    if (initialData) {
+    if (initialData) {      
       setName(initialData.city_name)
       setCode(initialData.city_code)
-      setCountryId(initialData.countryId)      
+      setCountryId(initialData.country_id.toString())      
     } else {
       setName("")
       setCode("")
@@ -64,7 +63,7 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
   }, [initialData, open])
 
   const validateForm = () => {
-    const newErrors: { city_name?: string; city_code?: string; countryId?: string } = {}
+    const newErrors: { city_name?: string; city_code?: string; country_id?: string } = {}
 
     if (!city_name.trim()) {
       newErrors.city_name = "City name is required"
@@ -78,8 +77,8 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
       newErrors.city_code = "City code must contain only letters"
     }
 
-    if (!countryId) {
-      newErrors.countryId = "Please select a country"
+    if (!country_id) {
+      newErrors.country_id = "Please select a country"
     }
 
     setErrors(newErrors)
@@ -99,7 +98,7 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
     onSubmit({
       city_name: city_name.trim(),
       city_code: city_code.toUpperCase().trim(),
-      countryId,
+      country_id,
     })
     
     // Reset form
@@ -152,21 +151,20 @@ export function CityFormDialog({ open, onOpenChange, onSubmit, initialData, coun
               {errors.city_code && <p className="text-sm text-destructive">{errors.city_code}</p>}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country</Label>
-              <Select value={countryId} onValueChange={(countryId: string) => {setCountryId(countryId)}}>
-              {/* <Select value={countryId} onValueChange={setCountryId}> */}
-                <SelectTrigger className={errors.countryId ? "border-destructive" : ""}>
+              <Label htmlFor="country">Country {initialData?.country?.country_name}</Label>
+              <Select value={country_id} onValueChange={(country_id: string) => {setCountryId(country_id)}}>              
+                <SelectTrigger className={errors.country_id ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
                 <SelectContent>                  
                   {countries.map((country) => (
                     <SelectItem key={country.id} value={country.id}>
-                      {country.country_name} ({country.country_code})
+                      {initialData?.country?.country_name === country.country_name ? `${country.country_name} (Current)` : country.country_name} ({country.country_code})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.countryId && <p className="text-sm text-destructive">{errors.countryId}</p>}
+              {errors.country_id && <p className="text-sm text-destructive">{errors.country_id}</p>}
             </div>
           </div>
           <DialogFooter>
